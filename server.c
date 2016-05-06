@@ -3,8 +3,10 @@
 #include <signal.h>
 #include <unistd.h>
 #include <windows.h>
+#include "main.h"
 
 SOCKET s;
+int board[2][100];
 
 void clean_up() {
     closesocket(s);
@@ -16,16 +18,30 @@ DWORD WINAPI ThreadFunc(void *data) {
     SOCKET new_socket = *((SOCKET *) data);
     char *message;
     int recv_size;
-    char server_reply[2000];
-    if ((recv_size = recv(new_socket, server_reply, 2000, 0)) == SOCKET_ERROR) {
+    char client_request[2000];
+    if ((recv_size = recv(new_socket, client_request, 2000, 0)) == SOCKET_ERROR) {
         puts("recv failed");
         int error_code = WSAGetLastError();
         printf("%d\n", error_code);
     }
-    server_reply[recv_size] = '\0';
-    puts(server_reply);
-    //Reply to the client
-    message = "Hello Client , I have received your connection. But I have to go now, bye\n";
+    client_request[recv_size] = '\0';
+    switch (client_request[0]) {
+        case LOGIN: {
+            message = "Hello Client\n";
+            break;
+        }
+        case GETBOARD:
+            message = malloc(201 * sizeof(char));
+            for (int j = 0; j < 2; j++) {
+                for (int i = 0; i < 100; i++)
+                    message[i + j * 100] = (char) board[j][i];
+            }
+            message[200] = '\0';
+            break;
+        default: {
+            message = "I do not understand\n";
+        }
+    }
     send(new_socket, message, strlen(message), 0);
     return 0;
 }
@@ -46,6 +62,10 @@ BOOL CtrlHandler(DWORD fdwCtrlType) {
 int main(int argc, char *argv[]) {
 
     atexit(clean_up);
+    for (int j = 0; j < 2; j++) {
+        for (int i = 0; i < 100; i++)
+            board[j][i] = j + 1;
+    }
     if (SetConsoleCtrlHandler((PHANDLER_ROUTINE) CtrlHandler, TRUE)) {
     }
     else {
@@ -103,6 +123,5 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    closesocket(s);
     return 0;
 }

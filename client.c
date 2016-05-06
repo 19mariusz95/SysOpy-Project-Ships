@@ -8,11 +8,10 @@
 #include<winsock2.h>
 #include "main.h"
 
-void draw_board();
+void draw_board(char string[2000]);
 
 int main(int argc, char *argv[]) {
 
-    draw_board();
     WSADATA wsa;
     SOCKET s;
     struct sockaddr_in server;
@@ -45,7 +44,8 @@ int main(int argc, char *argv[]) {
 
     puts("Connected");
 
-    char *message = "ala ma kota";
+    char message[10];
+    message[0] = GETBOARD;
     if (send(s, message, strlen(message), 0) < 0) {
         puts("Send failed");
         return 1;
@@ -62,12 +62,13 @@ int main(int argc, char *argv[]) {
 
     //Add a NULL terminating character to make it a proper string before printing
     server_reply[recv_size] = '\0';
-    puts(server_reply);
+
+    draw_board(server_reply);
 
     return 0;
 }
 
-void draw_board() {
+void draw_board(char string[2000]) {
     for (int k = 0; k < 2; k++) {
         printf("   ");
         for (int i = 0; i < 10; i++) {
@@ -81,7 +82,7 @@ void draw_board() {
         for (int k = 0; k < 2; k++) {
             printf("%2d ", i + 1);
             for (int j = 0; j < 10; j++) {
-                printf("o ");
+                printf("%d ", string[k * 100 + j + 10 * i]);
             }
             printf("    ");
         }
