@@ -8,19 +8,32 @@
 
 SOCKET s;
 
+struct result {
+    char nick[50];
+    int moves;
+};
+
+struct result results[10];
+
 int get_free_id();
 
 int set_ship(int id, int a, int b, int c, int d);
 
 int attack(int id, int a, int b);
 
+void init_results();
+
+void save(int id, int moves);
+
 int board[2][100];
 int ships[2][3] = {{2, 2, 2},
                    {2, 2, 2}};
 int id[MAX_IDS];
+char nick[2][50];
 int ready[2] = {0, 0};
 int wait[2] = {0, 1};
 int alive[2] = {12, 12};
+int moves[2] = {0, 0};
 
 void clean_up() {
     closesocket(s);
@@ -53,7 +66,11 @@ DWORD WINAPI ThreadFunc(void *data) {
                         board[free_id][i] = ' ';
                     alive[free_id] = 12;
                     ships[free_id][0] = ships[free_id][1] = ships[free_id][2] = 2;
+                    moves[free_id] = 0;
+                    strncpy(nick[free_id], client_request + 1, 50);
+                    printf("%s\n", nick[free_id]);
                 }
+                free(message);
                 break;
             }
             case GETBOARD:
@@ -69,6 +86,7 @@ DWORD WINAPI ThreadFunc(void *data) {
                 }
                 message[200] = '\0';
                 send(new_socket, message, 200, 0);
+                free(message);
                 break;
             case SETSHIP:
                 cl_id = client_request[1];
@@ -81,6 +99,7 @@ DWORD WINAPI ThreadFunc(void *data) {
                 message[0] = (char) res;
                 message[1] = '\0';
                 send(new_socket, message, 1, 0);
+                free(message);
                 break;
             case LOGOUT:
                 cl_id = client_request[1];
@@ -96,6 +115,7 @@ DWORD WINAPI ThreadFunc(void *data) {
                 message[0] = alive[cl_id] == 0 ? (char) 0 : (char) wait[cl_id];
                 message[1] = '\0';
                 send(new_socket, message, 1, 0);
+                free(message);
                 break;
             case ISREADY:
                 cl_id = client_request[1];
@@ -104,15 +124,33 @@ DWORD WINAPI ThreadFunc(void *data) {
                 message[0] = (char) ready[(cl_id + 1) % 2];
                 message[1] = '\0';
                 send(new_socket, message, 1, 0);
+                free(message);
                 break;
             case ATTACK:
                 cl_id = client_request[1];
                 a = (client_request[2]);
                 b = (client_request[3]);
-                message = malloc(2 * sizeof(char));
-                message[0] = (char) attack(cl_id, a, b);
-                message[1] = '\0';
-                send(new_socket, message, 1, 0);
+                message = malloc(10 * sizeof(char));
+                char result = (char) attack(cl_id, a, b);
+                message[0] = result;
+                if (result == WIN) {
+                    sprintf(message + 1, "%d", moves[cl_id]);
+                }
+                message[9] = '\0';
+                send(new_socket, message, 9, 0);
+                free(message);
+                break;
+            case SAVE:
+                cl_id = client_request[1];
+                save(cl_id, moves[cl_id]);
+                break;
+            case GETHISTORY:
+                message = calloc(1000, sizeof(char));
+                for (int i = 0; i < 10; i++) {
+                    sprintf(message + strlen(message), "%s %d\n", results[i].nick, results[i].moves);
+                }
+                send(new_socket, message, strlen(message), 0);
+                free(message);
                 break;
             default: {
                 break;
@@ -122,10 +160,20 @@ DWORD WINAPI ThreadFunc(void *data) {
     return 0;
 }
 
+void save(int id, int moves) {
+    for (int i = 9; i > 1; i--) {
+        results[i].moves = results[i - 1].moves;
+        strcpy(results[i].nick, results[i - 1].nick);
+    }
+    strcpy(results[0].nick, nick[id]);
+    results[0].moves = moves;
+}
+
 //a - column b - row
 int attack(int id, int a, int b) {
     if (a < 0 || a > 9 || b < 0 || b > 9)
         return AGAIN;
+    moves[id]++;
     int tmp = board[(id + 1) % 2][b * 10 + a];
     wait[id] = 1;
     wait[(id + 1) % 2] = 0;
@@ -134,8 +182,10 @@ int attack(int id, int a, int b) {
         board[(id + 1) % 2][b * 10 + a] = 'x';
         return alive[(id + 1) % 2] == 0 ? WIN : HIT;
     }
-    else {
+    else if (tmp == ' ') {
         board[(id + 1) % 2][b * 10 + a] = 'o';
+    } else if (tmp == 'x' || tmp == 'o') {
+        return AGAIN;
     }
     return 0;
 }
@@ -197,6 +247,7 @@ BOOL CtrlHandler(DWORD fdwCtrlType) {
 int main(int argc, char *argv[]) {
 
     atexit(clean_up);
+    init_results();
     for (int j = 0; j < 2; j++) {
         for (int i = 0; i < 100; i++)
             board[j][i] = ' ';
@@ -236,4 +287,11 @@ int main(int argc, char *argv[]) {
         CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) ThreadFunc, &new_socket, 0, NULL);
     }
     return 0;
+}
+
+void init_results() {
+    for (int i = 0; i < 10; i++) {
+        results[i].moves = -1;
+        strcpy(results[i].nick, "noname");
+    }
 }

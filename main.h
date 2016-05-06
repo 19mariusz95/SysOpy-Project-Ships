@@ -18,5 +18,7 @@
 #define WIN 10
 #define AGAIN 11
 #define LOST 12
+#define SAVE 13
+#define GETHISTORY 14
 
 #endif //SYSOPY_PROJECT_SHIPS_MAIN_H

@@ -14,7 +14,7 @@ void draw_board();
 
 void init();
 
-void login();
+void login(char string[50]);
 
 void logout();
 
@@ -26,7 +26,11 @@ void send_ready();
 
 int wait();
 
-int attack();
+void attack(char *string);
+
+void save();
+
+void show_history();
 
 BOOL CtrlHandler(DWORD fdwCtrlType) {
     switch (fdwCtrlType) {
@@ -46,7 +50,18 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     init();
-    login();
+    printf("Play a game or show history [1/2]\n");
+    int option;
+    scanf("%d", &option);
+    if (option == 2) {
+        show_history();
+        return 0;
+    }
+    char nick[50];
+    printf("Enter your nick\n");
+    scanf("%s", nick);
+    fflush(stdin);
+    login(nick);
     for (int i = 0; i < 6; i++) {
         draw_board();
         while (set_ship() != 1) {
@@ -65,10 +80,23 @@ int main(int argc, char *argv[]) {
             break;
         }
         draw_board();
-        while ((res = attack()) == AGAIN);
+        char tmp[2000];
+        do {
+            attack(tmp);
+            res = tmp[0];
+        } while (res == AGAIN);
         switch (res) {
             case WIN:
                 printf("Wygrales gre!!!\n");
+                int moves;
+                sscanf(tmp + 1, "%d", &moves);
+                printf("Ilosc ruchów: %d\n", moves);
+                printf("Chcesz zapisac ten wynik? [y/n]\n");
+                char c;
+                scanf("%c", &c);
+                if (c == 'y') {
+                    save();
+                }
                 return 0;
             case HIT:
                 printf("trafiony\n");
@@ -79,7 +107,35 @@ int main(int argc, char *argv[]) {
     }
 }
 
-int attack() {
+void show_history() {
+    char message[10];
+    message[0] = GETHISTORY;
+    message[1] = (char) id;
+    if (send(s, message, strlen(message), 0) < 0) {
+        puts("Send failed");
+        return;
+    }
+
+    int recv_size;
+    char string[2000];
+    if ((recv_size = recv(s, string, 2000, 0)) == SOCKET_ERROR) {
+        puts("recv failed");
+    }
+    string[recv_size] = '\0';
+    puts(string);
+}
+
+void save() {
+    char message[10];
+    message[0] = SAVE;
+    message[1] = (char) id;
+    if (send(s, message, 2, 0) < 0) {
+        puts("Send failed");
+        return;
+    }
+}
+
+void attack(char *string) {
     char message[10];
     message[0] = ATTACK;
     message[1] = (char) id;
@@ -92,16 +148,13 @@ int attack() {
     message[3] = (char) (b - 1);
     if (send(s, message, 4, 0) < 0) {
         puts("Send failed");
-        return 0;
+        return;
     }
     int recv_size;
-    char string[2000];
     if ((recv_size = recv(s, string, 2000, 0)) == SOCKET_ERROR) {
         puts("recv failed");
     }
     string[recv_size] = '\0';
-    int req = string[0];
-    return req;
 }
 
 int wait() {
@@ -187,14 +240,14 @@ int set_ship() {
     return req;
 }
 
-void login() {
-    char message[10];
+void login(char nick[50]) {
+    char message[52];
     message[0] = LOGIN;
-    if (send(s, message, strlen(message), 0) < 0) {
+    strcpy(message + 1, nick);
+    if (send(s, message, 52, 0) < 0) {
         puts("Send failed");
         return;
     }
-
     int recv_size;
     char string[2000];
     if ((recv_size = recv(s, string, 2000, 0)) == SOCKET_ERROR) {
