@@ -1,12 +1,8 @@
 //
 // Created by Mariusz on 04.05.2016.
 //
-
-
 #include <stdio.h>
-#include<stdio.h>
-#include<winsock2.h>
-#include <stdbool.h>
+#include <winsock2.h>
 #include "main.h"
 
 SOCKET s;
@@ -289,4 +285,3 @@ void draw_board() {
         printf("\n");
     }
 }
-

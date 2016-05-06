@@ -1,8 +1,9 @@
+//
+// Created by Mariusz on 04.05.2016.
+//
 #include <stdio.h>
 #include <winsock2.h>
-#include <signal.h>
 #include <unistd.h>
-#include <windows.h>
 #include "main.h"
 
 SOCKET s;
