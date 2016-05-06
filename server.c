@@ -22,6 +22,7 @@ BOOL CtrlHandler(DWORD fdwCtrlType) {
         default:
             break;
     }
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -73,12 +74,29 @@ int main(int argc, char *argv[]) {
     puts("Waiting for incoming connections...");
 
     c = sizeof(struct sockaddr_in);
-    new_socket = accept(s, (struct sockaddr *) &client, &c);
-    if (new_socket == INVALID_SOCKET) {
-        printf("accept failed with error code : %d", WSAGetLastError());
+    char *message;
+
+    while ((new_socket = accept(s, (struct sockaddr *) &client, &c)) != INVALID_SOCKET) {
+        puts("Connection accepted");
+        int recv_size;
+        char server_reply[2000];
+        if ((recv_size = recv(new_socket, server_reply, 2000, 0)) == SOCKET_ERROR) {
+            puts("recv failed");
+            int error_code = WSAGetLastError();
+            printf("%d\n", error_code);
+        }
+        server_reply[recv_size] = '\0';
+        puts(server_reply);
+        //Reply to the client
+        message = "Hello Client , I have received your connection. But I have to go now, bye\n";
+        send(new_socket, message, strlen(message), 0);
     }
 
-    puts("Connection accepted");
+    if (new_socket == INVALID_SOCKET) {
+        printf("accept failed with error code : %d", WSAGetLastError());
+        return 1;
+    }
 
+    closesocket(s);
     return 0;
 }

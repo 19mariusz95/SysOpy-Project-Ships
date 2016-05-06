@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include<stdio.h>
 #include<winsock2.h>
+#include "main.h"
 
 void draw_board();
 
@@ -43,6 +44,26 @@ int main(int argc, char *argv[]) {
     }
 
     puts("Connected");
+
+    char *message = "ala ma kota";
+    if (send(s, message, strlen(message), 0) < 0) {
+        puts("Send failed");
+        return 1;
+    }
+
+    //Receive a reply from the server
+    int recv_size;
+    char server_reply[2000];
+    if ((recv_size = recv(s, server_reply, 2000, 0)) == SOCKET_ERROR) {
+        puts("recv failed");
+    }
+
+    puts("Reply received\n");
+
+    //Add a NULL terminating character to make it a proper string before printing
+    server_reply[recv_size] = '\0';
+    puts(server_reply);
+
     return 0;
 }
 
