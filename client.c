@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     draw_board();
     while (1) {
         int res;
-        while ((res = wait()) != 0);
+        while ((res = wait()) == WAIT);
         if (res == LOST) {
             printf("Przegrales gre\n");
             break;
@@ -288,9 +288,9 @@ void init() {
     printf("Socket created.\n");
 
 
-    server.sin_addr.s_addr = inet_addr("83.22.255.222");
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
     server.sin_family = AF_INET;
-    server.sin_port = htons(25693);
+    server.sin_port = htons(8888);
 
     if (connect(s, (struct sockaddr *) &server, sizeof(server)) < 0) {
         puts("connect error");

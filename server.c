@@ -31,7 +31,7 @@ int ships[2][3] = {{2, 2, 2},
 int id[MAX_IDS];
 char nick[2][50];
 int ready[2] = {0, 0};
-int wait[2] = {0, 1};
+int wait[2] = {0, WAIT};
 int alive[2] = {12, 12};
 int moves[2] = {0, 0};
 
@@ -175,7 +175,7 @@ int attack(int id, int a, int b) {
         return AGAIN;
     moves[id]++;
     int tmp = board[(id + 1) % 2][b * 10 + a];
-    wait[id] = 1;
+    wait[id] = WAIT;
     wait[(id + 1) % 2] = 0;
     if (tmp == 's') {
         alive[(id + 1) % 2]--;
