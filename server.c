@@ -112,7 +112,7 @@ DWORD WINAPI ThreadFunc(void *data) {
             case WAIT:
                 cl_id = client_request[1];
                 message = malloc(2 * sizeof(char));
-                message[0] = alive[cl_id] == 0 ? (char) 0 : (char) wait[cl_id];
+                message[0] = alive[cl_id] == 0 ? (char) LOST : (char) wait[cl_id];
                 message[1] = '\0';
                 send(new_socket, message, 1, 0);
                 free(message);
@@ -161,7 +161,7 @@ DWORD WINAPI ThreadFunc(void *data) {
 }
 
 void save(int id, int moves) {
-    for (int i = 9; i > 1; i--) {
+    for (int i = 9; i > 0; i--) {
         results[i].moves = results[i - 1].moves;
         strcpy(results[i].nick, results[i - 1].nick);
     }
