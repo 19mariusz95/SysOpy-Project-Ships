@@ -20,7 +20,7 @@ void logout();
 
 int set_ship();
 
-void wait_for_opponent();
+void wait_for_opponent(char msg);
 
 void send_ready();
 
@@ -62,6 +62,7 @@ int main(int argc, char *argv[]) {
     scanf("%s", nick);
     fflush(stdin);
     login(nick);
+    wait_for_opponent(ISOPP);
     for (int i = 0; i < 6; i++) {
         draw_board();
         while (set_ship() != 1) {
@@ -69,7 +70,7 @@ int main(int argc, char *argv[]) {
         }
     }
     draw_board();
-    wait_for_opponent();
+    wait_for_opponent(ISREADY);
     printf("Ready to play a game.\n");
     draw_board();
     while (1) {
@@ -175,7 +176,7 @@ int wait() {
     return (int) string[0];
 }
 
-void wait_for_opponent() {
+void wait_for_opponent(char msg) {
     send_ready();
     int res = -1;
     printf("waiting for opponent ...\n");
@@ -184,7 +185,7 @@ void wait_for_opponent() {
             Sleep(1000);
         }
         char message[10];
-        message[0] = ISREADY;
+        message[0] = msg;
         message[1] = (char) id;
         if (send(s, message, strlen(message), 0) < 0) {
             puts("Send failed");

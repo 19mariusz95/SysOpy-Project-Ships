@@ -20,5 +20,6 @@
 #define LOST 12
 #define SAVE 13
 #define GETHISTORY 14
+#define ISOPP 15
 
 #endif //SYSOPY_PROJECT_SHIPS_MAIN_H

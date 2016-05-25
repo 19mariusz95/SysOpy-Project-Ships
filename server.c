@@ -152,6 +152,13 @@ DWORD WINAPI ThreadFunc(void *data) {
                 send(new_socket, message, strlen(message), 0);
                 free(message);
                 break;
+            case ISOPP:
+                message = calloc(2000, sizeof(char));
+                cl_id = client_request[1];
+                message[0] = id[(cl_id + 1) % MAX_IDS] > 0 ? (char) 1 : (char) 0;
+                message[1] = '\0';
+                send(new_socket, message, 1, 0);
+                free(message);
             default: {
                 break;
             }
