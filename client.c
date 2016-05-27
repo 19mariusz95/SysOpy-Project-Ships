@@ -22,8 +22,6 @@ int set_ship();
 
 void wait_for_opponent(char msg);
 
-void send_ready();
-
 int wait();
 
 void attack(char *string);
@@ -79,6 +77,9 @@ int main(int argc, char *argv[]) {
         if (res == LOST) {
             printf("Przegrales gre\n");
             break;
+        } else if (res == -1) {
+            printf("Przeciwnik odlaczyl sie\n");
+            exit(0);
         }
         draw_board();
         char tmp[2000];
@@ -143,6 +144,7 @@ void attack(char *string) {
     printf("Wprowadz namiar w formacie L N ; L-litera N-cyfra\n");
     char a;
     int b;
+    fflush(stdin);
     scanf("%c %d", &a, &b);
     fflush(stdin);
     message[2] = (char) (a - 65);
@@ -177,7 +179,6 @@ int wait() {
 }
 
 void wait_for_opponent(char msg) {
-    send_ready();
     int res = -1;
     printf("waiting for opponent ...\n");
     do {
@@ -204,16 +205,6 @@ void wait_for_opponent(char msg) {
             exit(0);
         }
     } while (res == 0);
-}
-
-void send_ready() {
-    char message[10];
-    message[0] = SETREADY;
-    message[1] = (char) id;
-    if (send(s, message, 2, 0) < 0) {
-        puts("Send failed");
-        return;
-    }
 }
 
 int set_ship() {

@@ -114,7 +114,8 @@ DWORD WINAPI ThreadFunc(void *data) {
             case WAIT:
                 cl_id = client_request[1];
                 message = malloc(2 * sizeof(char));
-                message[0] = alive[cl_id] == 0 ? (char) LOST : (char) wait[cl_id];
+                message[0] =
+                        alive[cl_id] == 0 ? (char) LOST : ready[(cl_id + 1) % 2] > 0 ? (char) wait[cl_id] : (char) -1;
                 message[1] = '\0';
                 send(new_socket, message, 1, 0);
                 free(message);
@@ -184,8 +185,6 @@ int attack(int id, int a, int b) {
         return AGAIN;
     moves[id]++;
     int tmp = board[(id + 1) % 2][b * 10 + a];
-    wait[id] = WAIT;
-    wait[(id + 1) % 2] = 0;
     if (tmp == 's') {
         alive[(id + 1) % 2]--;
         board[(id + 1) % 2][b * 10 + a] = 'x';
@@ -193,6 +192,8 @@ int attack(int id, int a, int b) {
     }
     else if (tmp == ' ') {
         board[(id + 1) % 2][b * 10 + a] = 'o';
+        wait[id] = WAIT;
+        wait[(id + 1) % 2] = 0;
     } else if (tmp == 'x' || tmp == 'o') {
         return AGAIN;
     }
@@ -253,8 +254,8 @@ int get_free_id() {
     return -1;
 }
 
-BOOL CtrlHandler(DWORD fdwCtrlType) {
-    switch (fdwCtrlType) {
+BOOL CtrlHandler(DWORD type) {
+    switch (type) {
         case CTRL_C_EVENT:
             Beep(750, 300);
             exit(0);
