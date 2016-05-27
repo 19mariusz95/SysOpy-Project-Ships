@@ -30,8 +30,8 @@ void save();
 
 void show_history();
 
-BOOL CtrlHandler(DWORD fdwCtrlType) {
-    switch (fdwCtrlType) {
+BOOL CtrlHandler(DWORD type) {
+    switch (type) {
         case CTRL_C_EVENT:
             exit(0);
         default:
@@ -89,10 +89,11 @@ int main(int argc, char *argv[]) {
         } while (res == AGAIN);
         switch (res) {
             case WIN:
+                draw_board();
                 printf("Wygrales gre!!!\n");
                 int moves;
                 sscanf(tmp + 1, "%d", &moves);
-                printf("Ilosc ruchów: %d\n", moves);
+                printf("Ilosc ruchow: %d\n", moves);
                 printf("Chcesz zapisac ten wynik? [y/n]\n");
                 char c;
                 scanf("%c", &c);
@@ -102,10 +103,15 @@ int main(int argc, char *argv[]) {
                 return 0;
             case HIT:
                 printf("trafiony\n");
+                break;
+            case SUNK:
+                printf("trafiony - zatopiony\n");
+                break;
             default:
+                printf("pudlo\n");
+                draw_board();
                 break;
         }
-        draw_board();
     }
 }
 

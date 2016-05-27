@@ -21,5 +21,12 @@
 #define SAVE 13
 #define GETHISTORY 14
 #define ISOPP 15
+#define SUNK 16
+
+struct ship {
+    int length;
+    int fields[3];
+    int alive;
+};
 
 #endif //SYSOPY_PROJECT_SHIPS_MAIN_H

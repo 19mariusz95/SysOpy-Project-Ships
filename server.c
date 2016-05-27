@@ -34,6 +34,7 @@ int ready[2] = {-1, -1};
 int wait[2] = {0, WAIT};
 int alive[2] = {12, 12};
 int moves[2] = {0, 0};
+struct ship ships_s[2][6];
 
 void clean_up() {
     closesocket(s);
@@ -70,6 +71,9 @@ DWORD WINAPI ThreadFunc(void *data) {
                     moves[free_id] = 0;
                     strncpy(nick[free_id], client_request + 1, 50);
                     printf("%s\n", nick[free_id]);
+                    for (int i = 0; i < 6; i++) {
+                        ships_s[free_id][i].alive = -1;
+                    }
                 }
                 free(message);
                 break;
@@ -188,7 +192,28 @@ int attack(int id, int a, int b) {
     if (tmp == 's') {
         alive[(id + 1) % 2]--;
         board[(id + 1) % 2][b * 10 + a] = 'x';
-        return alive[(id + 1) % 2] == 0 ? WIN : HIT;
+        int tr_id = -1;
+        int flaga = 1;
+        for (int i = 0; i < 6 && flaga; i++) {
+            int len = ships_s[(id + 1) % 2][i].length;
+            for (int j = 0; j < len && flaga; j++) {
+                if (ships_s[(id + 1) % 2][i].fields[j] == b * 10 + a) {
+                    ships_s[(id + 1) % 2][i].fields[j] = -1;
+                    tr_id = i;
+                    flaga = 0;
+                }
+            }
+        }
+        int zatopiony = 1;
+        int len = ships_s[(id + 1) % 2][tr_id].length;
+        for (int i = 0; i < len; i++) {
+            if (ships_s[(id + 1) % 2][tr_id].fields[i] >= 0) {
+                zatopiony = 0;
+                break;
+            }
+        }
+
+        return alive[(id + 1) % 2] == 0 ? WIN : zatopiony == 1 ? SUNK : HIT;
     }
     else if (tmp == ' ') {
         board[(id + 1) % 2][b * 10 + a] = 'o';
@@ -214,13 +239,22 @@ int set_ship(int id, int a, int b, int c, int d) {
                 return 0;
             for (int j = 0; j < 8; j++) {
                 int tmp = (b + tab[(j + 6) % 8]) * 10 + i + tab[j];
-                if (tmp >= 0 && tmp < 100 && board[id][(b + tab[(j + 6) % 8]) * 10 + i + tab[j]] != ' ') {
+                if (tmp >= 0 && tmp < 100 && i + tab[j] < 10 && i + tab[j] >= 0 &&
+                    board[id][(b + tab[(j + 6) % 8]) * 10 + i + tab[j]] != ' ') {
                     return 0;
                 }
             }
         }
+        int sid;
+        for (sid = 0; sid < 6; sid++) {
+            if (ships_s[id][sid].alive == -1)
+                break;
+        }
+        ships_s[id][sid].alive = 1;
+        ships_s[id][sid].length = c;
         for (int i = a; i < a + c; i++) {
             board[id][b * 10 + i] = 's';
+            ships_s[id][sid].fields[i - a] = b * 10 + i;
         }
         ships[id][c - 1]--;
         return 1;
@@ -233,12 +267,20 @@ int set_ship(int id, int a, int b, int c, int d) {
             }
             for (int j = 0; j < 8; j++) {
                 int tmp = (i + tab[(j + 6) % 8]) * 10 + a + tab[j];
-                if (tmp >= 0 && tmp < 100 && board[id][tmp] != ' ')
+                if (tmp >= 0 && tmp < 100 && a + tab[j] >= 0 && a + tab[j] < 10 && board[id][tmp] != ' ')
                     return 0;
             }
         }
+        int sid;
+        for (sid = 0; sid < 6; sid++) {
+            if (ships_s[id][sid].alive == -1)
+                break;
+        }
+        ships_s[id][sid].alive = 1;
+        ships_s[id][sid].length = c;
         for (int i = b; i < b + c; i++) {
             board[id][i * 10 + a] = 's';
+            ships_s[id][sid].fields[i - b] = i * 10 + a;
         }
         ships[id][c - 1]--;
         return 1;
