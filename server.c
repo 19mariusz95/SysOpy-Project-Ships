@@ -30,7 +30,7 @@ int ships[2][3] = {{2, 2, 2},
                    {2, 2, 2}};
 int id[MAX_IDS];
 char nick[2][50];
-int ready[2] = {0, 0};
+int ready[2] = {-1, -1};
 int wait[2] = {0, WAIT};
 int alive[2] = {12, 12};
 int moves[2] = {0, 0};
@@ -61,6 +61,7 @@ DWORD WINAPI ThreadFunc(void *data) {
                 message[1] = '\0';
                 send(new_socket, message, 1, 0);
                 if (free_id != -1) {
+                    ready[free_id] = 0;
                     ready[free_id] = 0;
                     for (int i = 0; i < 100; i++)
                         board[free_id][i] = ' ';
@@ -104,6 +105,7 @@ DWORD WINAPI ThreadFunc(void *data) {
             case LOGOUT:
                 cl_id = client_request[1];
                 id[cl_id] = -1;
+                ready[cl_id] = -1;
                 break;
             case SETREADY:
                 cl_id = client_request[1];
@@ -202,12 +204,19 @@ int set_ship(int id, int a, int b, int c, int d) {
     if (c < 1 || c > 3 || ships[id][c - 1] < 1 || a < 0 || a > 9 || b < 0 || b > 9 || d < 0 || d > 1) {
         return 0;
     }
+    int tab[] = {-1, -1, 0, 1, 1, 1, 0, -1};
     if (d == 0) {
         if (a + c > 10)
             return 0;
         for (int i = a; i < a + c; i++) {
             if (board[id][b * 10 + i] != ' ')
                 return 0;
+            for (int j = 0; j < 8; j++) {
+                int tmp = (b + tab[(j + 6) % 8]) * 10 + i + tab[j];
+                if (tmp >= 0 && tmp < 100 && board[id][(b + tab[(j + 6) % 8]) * 10 + i + tab[j]] != ' ') {
+                    return 0;
+                }
+            }
         }
         for (int i = a; i < a + c; i++) {
             board[id][b * 10 + i] = 's';
@@ -220,6 +229,11 @@ int set_ship(int id, int a, int b, int c, int d) {
         for (int i = b; i < b + c; i++) {
             if (board[id][i * 10 + a] != ' ') {
                 return 0;
+            }
+            for (int j = 0; j < 8; j++) {
+                int tmp = (i + tab[(j + 6) % 8]) * 10 + a + tab[j];
+                if (tmp >= 0 && tmp < 100 && board[id][tmp] != ' ')
+                    return 0;
             }
         }
         for (int i = b; i < b + c; i++) {
@@ -242,7 +256,6 @@ int get_free_id() {
 BOOL CtrlHandler(DWORD fdwCtrlType) {
     switch (fdwCtrlType) {
         case CTRL_C_EVENT:
-            printf("Ctrl-C event\n\n");
             Beep(750, 300);
             exit(0);
         default:

@@ -199,6 +199,10 @@ void wait_for_opponent(char msg) {
         }
         string[recv_size] = '\0';
         res = (int) string[0];
+        if (res == -1) {
+            printf("Opponent disconected\n");
+            exit(0);
+        }
     } while (res == 0);
 }
 
