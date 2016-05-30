@@ -12,7 +12,7 @@ int id;
 
 void draw_board();
 
-void init();
+void init(char *ip);
 
 void login(char string[50]);
 
@@ -42,12 +42,20 @@ BOOL CtrlHandler(DWORD type) {
 
 int main(int argc, char *argv[]) {
 
+    if (argc < 2) {
+        printf("You have to specify ip address in arguments\n");
+        exit(1);
+    }
+    if (strlen(argv[1]) != 9) {
+        printf("bad arg\n");
+        exit(2);
+    }
     atexit(logout);
     if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE) CtrlHandler, TRUE)) {
         printf("\nERROR: Could not set control handler");
         return 1;
     }
-    init();
+    init(argv[1]);
     printf("Play a game or show history [1/2]\n");
     int option;
     scanf("%d", &option);
@@ -73,7 +81,12 @@ int main(int argc, char *argv[]) {
     draw_board();
     while (1) {
         int res;
-        while ((res = wait()) == WAIT);
+        int flaga = 0;
+        while ((res = wait()) == WAIT) {
+            flaga = 1;
+            draw_board();
+            Sleep(1000);
+        }
         if (res == LOST) {
             printf("Przegrales gre\n");
             break;
@@ -81,7 +94,8 @@ int main(int argc, char *argv[]) {
             printf("Przeciwnik odlaczyl sie\n");
             exit(0);
         }
-        draw_board();
+        if (flaga == 0)
+            draw_board();
         char tmp[2000];
         do {
             attack(tmp);
@@ -274,7 +288,7 @@ void logout() {
     }
 }
 
-void init() {
+void init(char *ip) {
     printf("\nInitialising Winsock...");
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         printf("Failed. Error Code : %d", WSAGetLastError());
@@ -290,7 +304,7 @@ void init() {
     printf("Socket created.\n");
 
 
-    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_addr.s_addr = inet_addr(ip);
     server.sin_family = AF_INET;
     server.sin_port = htons(8888);
 
