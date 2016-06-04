@@ -9,10 +9,11 @@ SOCKET s;
 WSADATA wsa;
 struct sockaddr_in server;
 int id;
+char board[2000];
 
 void draw_board();
 
-void init(char *ip);
+void init(char *ip, int port);
 
 void login(char string[50]);
 
@@ -30,6 +31,8 @@ void save();
 
 void show_history();
 
+int the_same(char *string);
+
 BOOL CtrlHandler(DWORD type) {
     switch (type) {
         case CTRL_C_EVENT:
@@ -42,20 +45,26 @@ BOOL CtrlHandler(DWORD type) {
 
 int main(int argc, char *argv[]) {
 
-    if (argc < 2) {
-        printf("You have to specify ip address in arguments\n");
+    if (argc < 3) {
+        printf("You have to specify ip address and port in arguments\n");
         exit(1);
     }
     if (strlen(argv[1]) != 9) {
-        printf("bad arg\n");
+        printf("Wrong first argument\n");
         exit(2);
+    }
+    int port = atoi(argv[2]);
+    if (port == 0) {
+        printf("Wrong second argument\n");
+        exit(1);
     }
     atexit(logout);
     if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE) CtrlHandler, TRUE)) {
         printf("\nERROR: Could not set control handler");
         return 1;
     }
-    init(argv[1]);
+    board[0] = '\0';
+    init(argv[1], port);
     printf("Play a game or show history [1/2]\n");
     int option;
     scanf("%d", &option);
@@ -231,7 +240,7 @@ int set_ship() {
     char message[10];
     message[0] = SETSHIP;
     message[1] = (char) id;
-    printf("Wprowadz namiar w formacie L N D P L-litera N-cyfra D - dlugosc P - 0-poziom 1-pion\n");
+    printf("Wprowadz namiar w formacie L N D P | L-litera N-cyfra D - dlugosc P - 0-poziom 1-pion\n");
     char a;
     int b;
     int d;
@@ -288,7 +297,7 @@ void logout() {
     }
 }
 
-void init(char *ip) {
+void init(char *ip, int port) {
     printf("\nInitialising Winsock...");
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         printf("Failed. Error Code : %d", WSAGetLastError());
@@ -306,7 +315,7 @@ void init(char *ip) {
 
     server.sin_addr.s_addr = inet_addr(ip);
     server.sin_family = AF_INET;
-    server.sin_port = htons(8888);
+    server.sin_port = htons((u_short) port);
 
     if (connect(s, (struct sockaddr *) &server, sizeof(server)) < 0) {
         puts("connect error");
@@ -333,6 +342,10 @@ void draw_board() {
     }
     string[recv_size] = '\0';
 
+    if (the_same(string))
+        return;
+    for (int i = 0; i < 2000; i++)
+        board[i] = string[i];
     printf("%15s %30s\n", "client 0", "client 1");
     for (int k = 0; k < 2; k++) {
         printf("   ");
@@ -353,4 +366,12 @@ void draw_board() {
         }
         printf("\n");
     }
+}
+
+int the_same(char *string) {
+    for (int i = 0; i < 2000; i++) {
+        if (board[i] != string[i])
+            return 0;
+    }
+    return 1;
 }

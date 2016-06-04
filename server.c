@@ -310,13 +310,22 @@ BOOL CtrlHandler(DWORD type) {
 int main(int argc, char *argv[]) {
 
     atexit(clean_up);
+    if (argc < 2) {
+        printf("one argument required\n");
+        exit(1);
+    }
+    int port = atoi(argv[1]);
+    if (port == 0) {
+        printf("wrong first argument, int required\n");
+        exit(1);
+    }
     init_results();
     for (int j = 0; j < 2; j++) {
         for (int i = 0; i < 100; i++)
             board[j][i] = ' ';
     }
     if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE) CtrlHandler, TRUE)) {
-        printf("\nERROR: Could not set control handler");
+        printf("\nERROR: Could not set control handler\n");
         return 1;
     }
     WSADATA wsa;
@@ -336,8 +345,8 @@ int main(int argc, char *argv[]) {
     }
     printf("Socket created.\n");
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons(8888);
+    server.sin_addr.S_un.S_addr = INADDR_ANY;
+    server.sin_port = htons((u_short) port);
     if (bind(s, (struct sockaddr *) &server, sizeof(server)) == SOCKET_ERROR) {
         printf("Bind failed with error code : %d", WSAGetLastError());
     }
