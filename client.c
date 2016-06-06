@@ -49,10 +49,6 @@ int main(int argc, char *argv[]) {
         printf("You have to specify ip address and port in arguments\n");
         exit(1);
     }
-    if (strlen(argv[1]) != 9) {
-        printf("Wrong first argument\n");
-        exit(2);
-    }
     int port = atoi(argv[2]);
     if (port == 0) {
         printf("Wrong second argument\n");
@@ -90,9 +86,7 @@ int main(int argc, char *argv[]) {
     draw_board();
     while (1) {
         int res;
-        int flaga = 0;
         while ((res = wait()) == WAIT) {
-            flaga = 1;
             draw_board();
             Sleep(1000);
         }
@@ -103,8 +97,7 @@ int main(int argc, char *argv[]) {
             printf("Przeciwnik odlaczyl sie\n");
             exit(0);
         }
-        if (flaga == 0)
-            draw_board();
+        draw_board();
         char tmp[2000];
         do {
             attack(tmp);
@@ -369,9 +362,7 @@ void draw_board() {
 }
 
 int the_same(char *string) {
-    for (int i = 0; i < 2000; i++) {
-        if (board[i] != string[i])
-            return 0;
-    }
-    return 1;
+    if (strcmp(board, string) == 0)
+        return 1;
+    return 0;
 }
